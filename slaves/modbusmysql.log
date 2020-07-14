@@ -1,0 +1,2 @@
+2020-07-12 16:21:15,777 - modbusmysql - ERROR - Cant connect with database: (1045, "Access denied for user 'pi'@'localhost' (using password: YES)")
+2020-07-12 16:46:49,718 - modbusmysql - ERROR - Cant connect with database: (1049, "Unknown database 'datalogger'")
