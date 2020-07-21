@@ -40,10 +40,11 @@ def receive_signal(signum, frame):
 class instrument_map:
     pass
 
+#it retrieve the setting from mysql . and configuration the minimodbus , also retrieve the address to save it into address_dict{} so the program can read every address
 
 def get_slaves():  # Get the slaves enabled and save his settings
     with con:
-        # try:
+        # try to connect with database:
         cur = con.cursor(mdb.cursors.DictCursor)
         cur.execute("SELECT IDSlaves,Name,MAC FROM slaves_slaves WHERE Enable ='1'")
         IDSlaves = cur.fetchall()
@@ -56,7 +57,7 @@ def get_slaves():  # Get the slaves enabled and save his settings
         sql = sql % in_p
         print("setting " + sql)
         cur.execute(sql)
-        Slaves_Enabled_Settings = cur.fetchall()
+        Slaves_Enabled_Settings = cur.fetchall() # fetch all slave basic data
 
 
         i = -1
@@ -64,9 +65,9 @@ def get_slaves():  # Get the slaves enabled and save his settings
         sql = sql % in_p
         print("Address " + sql)
         cur.execute(sql)
-        Slaves_Enabled_Address = cur.fetchall()
+        Slaves_Enabled_Address = cur.fetchall()# fetch all slave and related address to be read
 
-        for slave in Slaves_Enabled_Settings:  # Slaves enabled. Get settings
+        for slave in Slaves_Enabled_Settings:  # Slaves enabled. Get settings , maybe there many slaves 
             i = i + 1
             Slaves.append(instrument_map())
             Slaves[i].instrument = minimalmodbus.Instrument('COM3', int(slave['Slaveaddres']))
@@ -100,13 +101,14 @@ def get_slaves():  # Get the slaves enabled and save his settings
     return Slaves
 
 
-def test_slaves(Slaves):  # Test the Slaves conexions and disable the ones who does not reply
+def test_slaves(Slaves):  # Test the Slaves conexions and disable the ones who does not reply and also read the address on slaves..display which address is work
     for slave in Slaves:
         slave.conexion_up = False
         for address in slave.address_dict:  # for each address in each slave
             address_value = None  # Value read from the address
             count = 0  # counter to try read 10 times
-
+            
+            # if cannot reach the address 10 times..it will stop
             while address_value == None and count < 10:
                 try:
                     slave.instrument.serial.flushInput()
@@ -136,9 +138,11 @@ def test_slaves(Slaves):  # Test the Slaves conexions and disable the ones who d
 #	except Exception,e:
 #	  logging.error('Error disabling non reachable Slaves - %s',e)
 
-
+# create a txt file to save the reading , the fileanme is todaytime+ IDshave +MAC of raspberry
 def save_header_log(slave):
     today_date = time.strftime("%Y-%m-%d")
+    
+    #if the *.tmp is existed ..just keep write each row .
     if os.path.exists("/var/log/modbusdatalogger/" + str(slave.IDSlave) + '-' + slave.MAC.replace(':',
                                                                                                   '') + '-' + slave.Name + '-' + today_date + ".tmp") == False:
         # Mv tmp to log so uploadFTP can find them.
@@ -158,6 +162,7 @@ def save_header_log(slave):
         file_log.close()
 
 
+# save each row with data reading
 def save_row(string, slave):
     today_date = time.strftime("%Y-%m-%d")
     file_log = open('/var/log/modbusdatalogger/' + str(slave.IDSlave) + '-' + slave.MAC.replace(':',
@@ -170,7 +175,7 @@ def save_row(string, slave):
 
 
 
-Slaves = get_slaves()
+Slaves = get_slaves() #create slaves
 test_slaves(Slaves)
 if len(Slaves) == 0:
     logger.info('No Slaves reachables. Revise settings. Exiting')
