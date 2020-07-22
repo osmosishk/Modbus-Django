@@ -1,0 +1,18 @@
+{% extends 'slaves/base.html' %}
+
+{% block content %}
+<H1>Data Logger</H1>
+
+    <div class="block-content">
+    <div class="row justify-content-center py-sm-3 py-md-5">
+        <div class="col-sm-10 col-md-8">
+        <div class="form-group">
+        <form  method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <input class="btn btn-primary" type="submit" value="Submit" />
+        </form>
+            </div>
+        </div>
+        </div>
+
+{% endblock %}
